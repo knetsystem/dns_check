@@ -1,0 +1,12 @@
+[Unit]
+Description=Run K-Net DNS checks every 60 seconds
+
+[Timer]
+OnBootSec=0
+OnUnitActiveSec=60s
+AccuracySec=1s
+Unit=knet-dns-check.service
+
+[Install]
+WantedBy=timers.target
+

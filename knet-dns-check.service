@@ -1,0 +1,27 @@
+[Unit]
+Description=K-Net DNS checks (podman) -> node_exporter textfile
+# Ensure the textfile dir exists before running
+RequiresMountsFor=/var/lib/node_exporter/textfile_collector
+
+[Service]
+Type=oneshot
+# Tune behavior via env vars (optional)
+Environment=VERBOSE=0
+Environment=TIMEOUT=2.0
+Environment=PUBLIC_PTR_MODE=fcrdns
+# Container image tag (adjust if you push to a registry)
+Environment=IMAGE=knet-dns-check:latest
+# Textfile output
+Environment=TEXTFILE_DIR=/var/lib/node_exporter/textfile_collector
+Environment=OUTFILE=/var/lib/node_exporter/textfile_collector/knet_dns.prom
+
+# Atomic write: write to temp, then mv to final (no torn reads)
+ExecStart=/bin/bash -o pipefail -c '\
+  tmp="$TEXTFILE_DIR/.knet_dns.prom.$$"; \
+  /usr/bin/podman run --rm --network=host \
+    -e VERBOSE="$VERBOSE" \
+    -e TIMEOUT="$TIMEOUT" \
+    -e PUBLIC_PTR_MODE="$PUBLIC_PTR_MODE" \
+    "$IMAGE" > "$tmp" && \
+  mv -f "$tmp" "$OUTFILE" \
+'
